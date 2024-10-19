@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
+source ./.env
 set -euo pipefail
+
 
 stop_containers () {
 	echo "Stopping other docker container"
@@ -20,22 +22,30 @@ create_net () {
 # wordpress php server
 create_images () {
 	docker build -t  php-apache ./server
-	docker build -t  php-db ./server/db
 }
 
 create_containers () {
-	docker run -d -p 8080:80 \
-		--network db-conn --ip 172.18.0.2 \
-		--name wordpress-apache-container php-apache
+	docker run --name ${WP_DOCKER_CONTAINER} \
+		--network db-conn --ip 172.18.0.5 \
+		-d -p 8080:80 php-apache 
 
-	docker run --name php-db-container -d -p 3306:3306 \
-			--network db-conn --ip 172.18.0.3 \
-			-e MYSQL_ROOT_PASSWORD=root123 --user 1000:50 php-db
+	docker run --name ${DB_DOCKER_CONTAINER} \
+	 		--network db-conn --ip 172.18.0.6 \
+			-p 3306:3306 \
+			-e MYSQL_ROOT_PASSWORD=${USER} \
+			-e MYSQL_PASSWORD=${PASSWORD} \
+			-d mysql:8.0.39
 }
 
 start_containers () {
-	docker start wordpress-apache-container
-	docker start php-db-ip
+	docker start ${WP_DOCKER_CONTAINER}
+	docker start ${DB_DOCKER_CONTAINER}
+}
+
+create_db () {
+	docker exec -it  ${DB_DOCKER_CONTAINER} \
+		mysql -u ${USER} -p"${PASSWORD}" \
+		-e "CREATE DATABASE ${DATABASE_NAME};"
 }
 
 case $1 in
@@ -44,8 +54,12 @@ case $1 in
 	"create_images") create_images ;;
 	"create_containers") create_containers ;;
 	"start_containers") start_containers ;;
+	"create_db")
+		DATABASE_NAME=$2 \
+		create_db ;;
 	*) echo "options[ stop_containers | create_net | create_images | create_containers | start_containers]"
 esac
 
+ 
 # docker exec -it <db-container> mysql -u root -p
 # docker logs <db-container>
