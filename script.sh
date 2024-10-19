@@ -61,5 +61,6 @@ case $1 in
 esac
 
  
-# docker exec -it <db-container> mysql -u root -p
+# docker exec -it <container> mysql -u root -p
+# docker exec -it <container> bash
 # docker logs <db-container>
