@@ -1,4 +1,4 @@
-# Use the official PHP image with Apache
+# Oficial PHP/Wordpress image with Apache
 FROM php:8.1-apache
 
 # Install necessary PHP extensions for WordPress
